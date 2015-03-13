@@ -11,8 +11,11 @@ window.app = angular.module('bunker', [
 	'plangular' /* soundcloud embed */
 ])
 	.config(function (sailsResourceProvider, $stateProvider, $urlRouterProvider) {
+
+		window.io.sails.autoConnect = true;
 		sailsResourceProvider.configuration = {
-			verbose: false
+			verbose: false,
+			socket: window.io.socket
 		};
 
 		$urlRouterProvider.otherwise('/');

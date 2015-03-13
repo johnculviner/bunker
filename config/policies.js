@@ -53,6 +53,7 @@ module.exports.policies = {
 	RoomController: {
 		'findOne': 'isLoggedIn',
 		'create': 'isLoggedIn',
+		'message': 'isLoggedIn',
 		'join': 'isLoggedIn',
 		'leave': 'isLoggedIn',
 		'messages': 'isLoggedIn',
@@ -63,7 +64,6 @@ module.exports.policies = {
 		'find': 'isLoggedIn'
 	},
 	MessageController: {
-		'create': 'isLoggedIn',
 		'update': 'isLoggedIn',
 		'emoticonCounts': true
 	}

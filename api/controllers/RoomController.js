@@ -10,6 +10,7 @@
 'use strict';
 
 var moment = require('moment');
+var ent = require('ent');
 var actionUtil = require('../../node_modules/sails/lib/hooks/blueprints/actionUtil');
 var ObjectId = require('mongodb').ObjectID;
 
@@ -46,6 +47,92 @@ module.exports.create = function (req, res) {
 		});
 	});
 };
+
+exports.message = function (req, res) {
+
+	var roomId = actionUtil.requirePk(req);
+
+	// block the trolls
+	var text = ent.encode(req.param('text'));
+	if (!text || !text.length) {
+		return res.badRequest();
+	}
+
+	User.findOne(req.session.userId)
+		.then(function (user) {
+
+			// TODO if author is not a member of the roomId, cancel
+
+			if (/^\/nick\s+/i.test(text)) { // Change the current user's nick
+
+				var newNick = text.match(/\/nick\s+([\w\s\-\.]{1,20})/i);
+				if (newNick) {
+					var currentNick = user.nick;
+					user.nick = newNick[1];
+					user.save() // save the model with the updated nick
+						.then(function () {
+							User.publishUpdate(user.id, {nick: user.nick});
+
+							RoomMember.find().where({user: user.id}).exec(function (err, roomMembers) {
+								var rooms = _.pluck(roomMembers, 'room');
+								RoomService.messageRooms(rooms, currentNick + ' changed their handle to ' + user.nick);
+							});
+						})
+						.catch(function () {
+							// TODO error handling
+						});
+				}
+			}
+			else if (/^\/topic/i.test(text)) { // Change room topic
+
+				RoomMember.findOne({room: roomId, user: user.id}).populate('user').exec(function (error, roomMember) {
+					if (error) return res.serverError(error);
+					if (!roomMember) return res.forbidden();
+
+					if (roomMember.role == 'administrator' || roomMember.role == 'owner') {
+
+						var topicMatches = text.match(/\/topic\s+(.+)/i);
+						var topic = topicMatches ? topicMatches[1].substr(0, 200) : null;
+
+						Room.update(roomId, {topic: topic}).exec(function (error, room) {
+							if (error) return res.serverError(error);
+							if (!room) return res.notFound();
+
+							room = room[0];
+							var message = roomMember.user.nick + (topic ? ' changed the topic to "' + topic + '"' : ' cleared the topic');
+
+							Room.publishUpdate(room.id, room);
+							RoomService.messageRoom(roomId, message);
+						});
+					}
+					else {
+						res.forbidden();
+					}
+				});
+			}
+			else if (/^\/me\s+/i.test(text)) {
+				return Message.create({
+					room: roomId,
+					author: null,
+					text: user.nick + text.substring(3)
+				}).then(broadcastMessage);
+			}
+			else {
+
+				// base case, a regular chat message
+				// Create a message model object in the db
+
+				return Message.create({
+					room: roomId,
+					author: user.id,
+					text: text
+				}).then(broadcastMessage);
+			}
+		})
+		.then(res.ok)
+		.catch(res.serverError);
+};
+
 
 // GET /room/:id/join
 // Join a room
@@ -165,10 +252,13 @@ module.exports.media = function (req, res) {
 	Message.native(function (err, messageCollection) {
 		if (err) res.serverError(err);
 
-		messageCollection.find({room: ObjectId(roomId), text: {$regex: mediaRegex}}).sort({createdAt: -1}).toArray(function (err, messages) {
-			if(err) res.serverError(err);
+		messageCollection.find({
+			room: ObjectId(roomId),
+			text: {$regex: mediaRegex}
+		}).sort({createdAt: -1}).toArray(function (err, messages) {
+			if (err) res.serverError(err);
 
-			res.ok(_.map(messages, function(message) {
+			res.ok(_.map(messages, function (message) {
 				return _(message)
 					.pick(['author', 'text', 'createdAt'])
 					.extend({id: message._id})
@@ -177,3 +267,11 @@ module.exports.media = function (req, res) {
 		});
 	});
 };
+
+function broadcastMessage(message) {
+	// now that message has been created, get the populated version
+	Message.findOne(message.id).populateAll().then(function (message) {
+		Room.message(message.room, message); // message all subscribers of the room that with the new message as data
+	});
+	return message;
+}
