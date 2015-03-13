@@ -46,9 +46,11 @@ app.directive('inputBox', function ($rootScope, $stateParams, bunkerApi, emotico
 					|| previousText == scope.messageText
 					|| chosenMessage.edited
 					|| !datesWithinSeconds(chosenMessage.createdAt, Date.now(), messageEditWindowSeconds)) {
-					newMessage.$save(function (result) {
+
+					io.socket.post('/room/' + $rootScope.roomId + '/message', {text: scope.messageText}, function(result) {
 						// TODO use the result of this? currently this object is just forgotten about
 						historicMessage.id = result.id;
+						$rootScope.$digest();
 					});
 
 					// Save message for up/down keys to retrieve
