@@ -36,7 +36,7 @@ module.exports.create = function (req, res) {
 	Room.create({name: name}).exec(function (err, room) {
 
 		// Make user an administrator
-		RoomMember.create({room: room.id, user: userId, role: 'administrator'}).exec(function (error, roomMember) {
+		RoomMember.create({room: room.id, user: userId, role: 'owner'}).exec(function (error, roomMember) {
 			RoomMember.publishCreate(roomMember);
 
 			// WARNING

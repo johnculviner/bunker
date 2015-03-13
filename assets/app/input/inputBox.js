@@ -48,8 +48,9 @@ app.directive('inputBox', function ($rootScope, $stateParams, bunkerApi, emotico
 					|| !datesWithinSeconds(chosenMessage.createdAt, Date.now(), messageEditWindowSeconds)) {
 
 					io.socket.post('/room/' + $rootScope.roomId + '/message', {text: scope.messageText}, function(result) {
-						// TODO use the result of this? currently this object is just forgotten about
-						historicMessage.id = result.id;
+						if(result) {
+							historicMessage.id = result.id;
+						}
 						$rootScope.$digest();
 					});
 

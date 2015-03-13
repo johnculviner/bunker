@@ -7,6 +7,39 @@
 
 'use strict';
 var moment = require('moment');
+var Promise = require('bluebird');
+
+module.exports.init = function (req, res) {
+
+	User.findOne(req.session.userId)
+		.then(function (user) {
+			return RoomMember.find().where({user: user.id}).populateAll();
+		})
+		.then(function (memberships) {
+
+			var rooms = _.pluck(memberships, 'room');
+
+			// Setup subscriptions
+			Room.subscribe(req, rooms, ['update', 'message']);
+
+			// Get some initial messages
+			return Promise.each(rooms, function (room) {
+				return Promise.join(
+					Message.find().where({room: room.id}).populateAll(),
+					RoomMember.find().where({room: room.id}).populateAll()).spread(function(messages, roomMembers) {
+						room.messages = messages;
+						room.members = roomMembers;
+					});
+			});
+		})
+		.then(function (rooms) {
+			return {
+				rooms: rooms
+			};
+		})
+		.then(res.ok)
+		.catch(res.serverError);
+};
 
 // Activity update route. This will respond to PUT /user/current/activity
 // This route only allows updates to present and typingIn.
