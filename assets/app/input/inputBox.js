@@ -1,24 +1,104 @@
-app.directive('inputBox', function (emoticons, bunkerData) {
+app.directive('inputBox', function (emoticons, bunkerData, fuzzyByFilter) {
+
 	return {
-		//scope: {},
+		scope: {},
 		//bindToController: true,
 		//controller: 'InputBoxController',
 		//controllerAs: 'inputBox',
 		templateUrl: '/assets/app/input/inputBox.html',
 		link: link
 	};
+
+	function link(scope, elem) {
+		var menuButton = elem.find('.dropdown-toggle');
+		var menu = elem.find('.dropdown');
+		var textArea = elem.find('textarea');
+		var listener = new window.keypress.Listener(elem);
+		$('textarea', elem).keydown(keyDown)
+		//var self = this;
+
+		//this.searchTerm = '';
+
+		var searchTerm = '';
+		var searching;
+
+		var commands = [
+			{command: 'test', label: 'har har'},
+			{command: 'derp', label: 'welp'}
+		];
+
+		scope.commands = commands;
+		//scope.$digest();
+
+		function keyDown(evt) {
+			// only check numbers and letters for this func
+			//if (evt.which < 48 || evt.which > 90) return;
+
+			//if (!searching) return;
+
+			var words = textArea.val();
+			var match = /^(\/|@)(.*)$/ig.exec(words);
+			console.log('match', match);
+			if (match) {
+				searching = true;
+				searchTerm = match[2];
+			}
+			else {
+				searching = false;
+				searchTerm = '';
+			}
+
+			update();
+		}
+
+		/* setup special key combos */
+		//listener.simple_combo("/", function (a,b,c) {
+		//	console.log(a,b,c)
+		//	menuButton.dropdown('toggle');
+		//	searching = true;
+		//	return true;
+		//});
+
+		//listener.simple_combo("backspace", function () {
+		//	if (searchTerm.length) {
+		//		//TODO: is there a lodash thing to chop off the last letter?
+		//		searchTerm = searchTerm.slice(0, searchTerm.length - 1);
+		//	}
+		//	else { // assuming we are backspacing over the search trigger (ex: / )
+		//		searching = false;
+		//	}
+		//
+		//	update();
+		//	return true;
+		//});
+
+		function update() {
+			if (searching) {
+				menuOpen();
+			}
+			else {
+				menuClose();
+			}
+
+			console.log('searchTerm', searchTerm);
+			scope.commands = fuzzyByFilter(commands, 'command', searchTerm);
+			scope.$digest();
+		}
+
+		function menuOpen() {
+			if (menu.hasClass('open')) return;
+			menuButton.dropdown('toggle');
+		}
+
+		function menuClose() {
+			if (!menu.hasClass('open')) return;
+			menuButton.dropdown('toggle');
+		}
+	}
 });
 
-function link(scope, elem) {
-	var menu = elem.find('.dropdown-toggle');
-	var listener = new window.keypress.Listener(elem);
-	listener.simple_combo("/", function() {
-		menu.dropdown('toggle');
-		return true;
-	});
-}
 
-app.directive('InputBoxController', function (emoticons, bunkerData) {
+app.controller('InputBoxController', function (emoticons, bunkerData) {
 
 
 //			// bind our keyup/down funcs to input box.
@@ -26,13 +106,13 @@ app.directive('InputBoxController', function (emoticons, bunkerData) {
 //				.keydown(keyDown)
 //				.keyup(keyUp);
 
-						//bunkerData.createMessage(newMessage.room, newMessage.text)
-						//.then(function (result) {
-						//	if (result && result.author) {
-						//		historicMessage.id = result.id;
-						//		scope.submittedMessages.unshift(historicMessage); // Save message for up/down keys to retrieve
-						//	}
-						//});
+	//bunkerData.createMessage(newMessage.room, newMessage.text)
+	//.then(function (result) {
+	//	if (result && result.author) {
+	//		historicMessage.id = result.id;
+	//		scope.submittedMessages.unshift(historicMessage); // Save message for up/down keys to retrieve
+	//	}
+	//});
 
 });
 
