@@ -14,7 +14,7 @@ app.directive('inputBox', function (emoticons, bunkerData, fuzzyByFilter) {
 		var menu = elem.find('.dropdown');
 		var textArea = elem.find('textarea');
 		var listener = new window.keypress.Listener(elem);
-		$('textarea', elem).keydown(keyDown)
+		$('textarea', elem).keyup(keyUp)
 		//var self = this;
 
 		//this.searchTerm = '';
@@ -30,14 +30,14 @@ app.directive('inputBox', function (emoticons, bunkerData, fuzzyByFilter) {
 		scope.commands = commands;
 		//scope.$digest();
 
-		function keyDown(evt) {
+		function keyUp(evt) {
 			// only check numbers and letters for this func
 			//if (evt.which < 48 || evt.which > 90) return;
 
 			//if (!searching) return;
 
 			var words = textArea.val();
-			var match = /^(\/|@)(.*)$/ig.exec(words);
+			var match = /^(\/)(\w*)$/ig.exec(words);
 			console.log('match', match);
 			if (match) {
 				searching = true;
