@@ -19,8 +19,8 @@ app.directive('inputBox', function (emoticons, bunkerData, fuzzyByFilter) {
 
 		//this.searchTerm = '';
 
-		var searchTerm = '';
-		var searching;
+		//var searchTerm = '';
+		//var searching;
 
 		var commands = [
 			{command: 'test', label: 'har har'},
@@ -36,19 +36,19 @@ app.directive('inputBox', function (emoticons, bunkerData, fuzzyByFilter) {
 
 			//if (!searching) return;
 
-			var words = textArea.val();
-			var match = /^(\/)(\w*)$/ig.exec(words);
-			console.log('match', match);
-			if (match) {
-				searching = true;
-				searchTerm = match[2];
-			}
-			else {
-				searching = false;
-				searchTerm = '';
+			var inputMessage = textArea.val();
+			var systemCommand = /^\/(\w*)$/ig.exec(inputMessage);
+			console.log('match', systemCommand);
+			if (systemCommand) {
+				return update(true, systemCommand[1]);
 			}
 
-			update();
+			var mention = /@([\w\s\-\.]{0,19})/ig.exec(inputMessage);
+			if (mention) {
+				return update(true, mention[1]);
+			}
+
+			update(false);
 		}
 
 		/* setup special key combos */
@@ -72,13 +72,12 @@ app.directive('inputBox', function (emoticons, bunkerData, fuzzyByFilter) {
 		//	return true;
 		//});
 
-		function update() {
-			if (searching) {
-				menuOpen();
+		function update(searching, searchTerm) {
+			if (!searching) {
+				return menuClose();
 			}
-			else {
-				menuClose();
-			}
+
+			menuOpen();
 
 			console.log('searchTerm', searchTerm);
 			scope.commands = fuzzyByFilter(commands, 'command', searchTerm);
