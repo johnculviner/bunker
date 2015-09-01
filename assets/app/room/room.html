@@ -72,7 +72,7 @@
 			<ul class="list-group member-list" ng-if="current.$selected">
 				<li class="list-group-item"
 					ng-switch="member.user.connected"
-					ng-repeat="member in memberList track by member.id">
+					ng-repeat="member in current.$memberList track by member.id">
 
 					<span class="offline" ng-switch-when="false">
 						<!-- offline member, much less watches -->

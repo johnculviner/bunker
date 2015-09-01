@@ -21,7 +21,7 @@ app.directive('room', function ($rootScope, $state, bunkerData, emoticons, $wind
 					});
 				});
 
-				updateMemberList();
+				bunkerData.updateMemberList($scope.current);
 			});
 
 			$scope.openHistory = function () {
@@ -69,7 +69,9 @@ app.directive('room', function ($rootScope, $state, bunkerData, emoticons, $wind
 				showEmoticonAnimation(el, message.emoticon);
 			});
 
-			$rootScope.$on('userUpdated', updateMemberList);
+			$rootScope.$on('userUpdated', function(){
+				bunkerData.updateMemberList($scope.current);
+			});
 
 			function showEmoticonAnimation(el, emoticon){
 				var knownEmoticon = _.find(emoticons.files, function (known) {
@@ -94,18 +96,18 @@ app.directive('room', function ($rootScope, $state, bunkerData, emoticons, $wind
 				});
 			}
 
-			function updateMemberList() {
-				$scope.memberList = _($scope.current.$members)
-					.select(function (member) {
-						// Don't show users who haven't logged in for awhile
-						return moment().diff(member.user.lastConnected, 'days') < 45;
-					})
-					.sortBy(function (member) {
-						var user = member.user;
-						return (user.connected ? (user.$present ? '000' : '111') : '999') + user.nick.toLowerCase();
-					})
-					.value();
-			}
+			//function updateMemberList() {
+			//	$scope.memberList = _($scope.current.$members)
+			//		.select(function (member) {
+			//			// Don't show users who haven't logged in for awhile
+			//			return moment().diff(member.user.lastConnected, 'days') < 45;
+			//		})
+			//		.sortBy(function (member) {
+			//			var user = member.user;
+			//			return (user.connected ? (user.$present ? '000' : '111') : '999') + user.nick.toLowerCase();
+			//		})
+			//		.value();
+			//}
 		}
 	}
 });

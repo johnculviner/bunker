@@ -131,6 +131,19 @@ app.factory('bunkerData', function ($rootScope, $q, $window, $timeout, $notifica
 			message.$idAndEdited = message.id + message.editCount;
 		},
 
+		updateMemberList: function updateMemberList(room) {
+			room.$memberList = _(room.$members)
+				.select(function (member) {
+					// Don't show users who haven't logged in for awhile
+					return moment().diff(member.user.lastConnected, 'days') < 45;
+				})
+				.sortBy(function (member) {
+					var user = member.user;
+					return (user.connected ? (user.$present ? '000' : '111') : '999') + user.nick.toLowerCase();
+				})
+				.value();
+		},
+
 		// Rooms
 
 		getRoom: function (id) {

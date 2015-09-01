@@ -2,13 +2,52 @@
 		 ng-class="{'edit-mode' : editMode}">
 	<div class="row">
 		<div class="dropdown dropup">
-			<button class="hidden btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-				Dropdown
-				<span class="caret"></span>
+			<button class="hidden dropdown-toggle" data-toggle="dropdown">
 			</button>
-			<ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+			<!-- system commands -->
+			<ul ng-if="list=='command'" role="menu" class="dropdown-menu">
 				<li ng-repeat="command in commands track by command.command">
 					<a href="#">{{::command.command}} {{::command.label}}</a>
+				</li>
+			</ul>
+			<!-- emoticon list -->
+			<ul ng-if="list=='name'" role="menu" class="dropdown-menu">
+				<li ng-repeat="emote in commands track by emote.name">
+					<a>{{::emote.name}}</a>
+				</li>
+			</ul>
+			<!--user list-->
+			<ul ng-if="list=='nick'" role="menu" class="dropdown-menu">
+				<li ng-repeat="user in commands track by user.id">
+					<!--<a ng-click="mentionUser(user.nick)">{{::user.nick}}</a>-->
+					
+						<span ng-switch="user.busy === true" class="user-icon" >
+							<span ng-switch="user.typingIn === roomId" ng-switch-when="false">
+								<span ng-switch-when="false">
+									<img gravatar-src-once="user.email | lowercase" gravatar-size="20" title="{{::user.email}}"/>
+								</span>
+								<span ng-switch-default>
+									<i class="fa fa-ellipsis-h" title="{{::user.email}}"></i>
+								</span>
+							</span>
+							<span ng-switch-default title="Away: {{user.busyMessage}}">
+								<i class="fa fa-clock-o"></i>
+							</span>
+						</span>
+
+					<a ng-click="mentionUser(user.nick)">{{user.nick}}</a>
+
+					<div class="pull-right">
+							<!--<span ng-show="member.$fighting">-->
+								<!--<img src="/assets/images/emoticons/punch.gif"/>-->
+							<!--</span>-->
+							<!--<span ng-if="member.role != 'member'" ng-switch="member.role" title="{{member.role}}">-->
+								<!--<i class="fa fa-gavel" ng-switch-when="administrator"></i>-->
+								<!--<i class="fa fa-comments" ng-switch-when="moderator"></i>-->
+							<!--</span>-->
+							<span class="status" ng-class="user.$present ? 'here' : 'away'">
+							</span>
+					</div>
 				</li>
 			</ul>
 		</div>
@@ -18,7 +57,7 @@
 									ng-model="messageText"
 									ng-trim="false"
 									bunker-input="messageText"
-									></textarea>
+						></textarea>
 					<span class="input-group-btn">
 						<button type="submit" class="btn btn-success">{{editMode? 'EDIT MESSAGE' : 'SEND'}}</button>
 					</span>

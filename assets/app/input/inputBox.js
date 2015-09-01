@@ -1,10 +1,7 @@
-app.directive('inputBox', function (emoticons, bunkerData, fuzzyByFilter) {
+app.directive('inputBox', function ($rootScope, emoticons, bunkerData, fuzzyByFilter) {
 
 	return {
 		scope: {},
-		//bindToController: true,
-		//controller: 'InputBoxController',
-		//controllerAs: 'inputBox',
 		templateUrl: '/assets/app/input/inputBox.html',
 		link: link
 	};
@@ -15,20 +12,15 @@ app.directive('inputBox', function (emoticons, bunkerData, fuzzyByFilter) {
 		var textArea = elem.find('textarea');
 		var listener = new window.keypress.Listener(elem);
 		$('textarea', elem).keyup(keyUp)
-		//var self = this;
-
-		//this.searchTerm = '';
-
-		//var searchTerm = '';
-		//var searching;
 
 		var commands = [
 			{command: 'test', label: 'har har'},
 			{command: 'derp', label: 'welp'}
 		];
 
-		scope.commands = commands;
-		//scope.$digest();
+		scope.mentionUser = function (userNick) {
+			$rootScope.$broadcast('inputText', '@' + userNick);
+		};
 
 		function keyUp(evt) {
 			// only check numbers and letters for this func
@@ -40,15 +32,22 @@ app.directive('inputBox', function (emoticons, bunkerData, fuzzyByFilter) {
 			var systemCommand = /^\/(\w*)$/ig.exec(inputMessage);
 			console.log('match', systemCommand);
 			if (systemCommand) {
-				return update(true, systemCommand[1]);
+				return update(commands, 'command', systemCommand[1]);
 			}
 
 			var mention = /@([\w\s\-\.]{0,19})/ig.exec(inputMessage);
 			if (mention) {
-				return update(true, mention[1]);
+				var memberList = bunkerData.getRoom($rootScope.roomId).$memberList;
+				var users = _.map(memberList, 'user');
+				return update(users, 'nick', mention[1]);
 			}
 
-			update(false);
+			var emoticon = /:(.*)/ig.exec(inputMessage);
+			if(emoticon) {
+				return update(emoticons.list, 'name', emoticon[1]);
+			}
+
+			update();
 		}
 
 		/* setup special key combos */
@@ -72,15 +71,16 @@ app.directive('inputBox', function (emoticons, bunkerData, fuzzyByFilter) {
 		//	return true;
 		//});
 
-		function update(searching, searchTerm) {
-			if (!searching) {
+		function update(list, searchProperty, searchTerm) {
+			if (!list) {
 				return menuClose();
 			}
 
 			menuOpen();
 
 			console.log('searchTerm', searchTerm);
-			scope.commands = fuzzyByFilter(commands, 'command', searchTerm);
+			scope.list = searchProperty;
+			scope.commands = fuzzyByFilter(list, searchProperty, searchTerm);
 			scope.$digest();
 		}
 
@@ -95,29 +95,6 @@ app.directive('inputBox', function (emoticons, bunkerData, fuzzyByFilter) {
 		}
 	}
 });
-
-
-app.controller('InputBoxController', function (emoticons, bunkerData) {
-
-
-//			// bind our keyup/down funcs to input box.
-//			$('textarea', elem)
-//				.keydown(keyDown)
-//				.keyup(keyUp);
-
-	//bunkerData.createMessage(newMessage.room, newMessage.text)
-	//.then(function (result) {
-	//	if (result && result.author) {
-	//		historicMessage.id = result.id;
-	//		scope.submittedMessages.unshift(historicMessage); // Save message for up/down keys to retrieve
-	//	}
-	//});
-
-});
-
-function keyDown(evt) {
-
-}
 
 
 //app.directive('inputBox', function ($rootScope, $stateParams, emoticons, bunkerData) {
